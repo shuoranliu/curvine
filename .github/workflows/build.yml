@@ -1,0 +1,41 @@
+name: Rust
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/curvine-compile:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "curvine-build"
+      
+      - name: Build
+        run: cargo build --verbose
+        
+      - name: Run fmt
+        run: cargo fmt --check
+        
+      - name: Run clippy
+        env:
+          CLIPPY_LEVEL: deny 
+        run: cargo clippy --release --all-targets -- --${CLIPPY_LEVEL}=warnings
